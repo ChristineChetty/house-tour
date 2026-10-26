@@ -26,6 +26,11 @@ const FILES = [
   ['collision_furniture.glb', 'public/models/collision_furniture.glb.enc'],
   ['house_unfurnished.glb', 'public/models/house_unfurnished.glb.enc'],
   ['house_furnished.glb', 'public/models/house_furnished.glb.enc'],
+  // Lighter copies for phones and ordinary laptops (scripts/stage5/texture_tiers.py)
+  ['house_unfurnished_2k.glb', 'public/models/house_unfurnished_2k.glb.enc'],
+  ['house_furnished_2k.glb', 'public/models/house_furnished_2k.glb.enc'],
+  ['house_unfurnished_1k.glb', 'public/models/house_unfurnished_1k.glb.enc'],
+  ['house_furnished_1k.glb', 'public/models/house_furnished_1k.glb.enc'],
 ];
 
 function askHidden(question) {

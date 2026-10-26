@@ -16,6 +16,14 @@ const VARIANTS = {
   unfurnished: { label: 'Unfurnished', house: 'house_unfurnished.glb', collision: ['collision.glb'] },
 };
 
+// Texture detail. The 4k bakes need ~1.3 GB of GPU memory, which crashes phones and many laptops,
+// so phones start on 1k and computers on 2k (texture_tiers.py makes the _1k/_2k GLBs).
+const DETAILS = [
+  { label: 'Low', suffix: '_1k', side: 1024 },
+  { label: 'Standard', suffix: '_2k', side: 2048 },
+  { label: 'High', suffix: '', side: 4096 },
+];
+
 
 // ---------- renderer ----------
 const renderer = new THREE.WebGLRenderer({ antialias: !touch, powerPreference: 'high-performance' });
@@ -69,6 +77,7 @@ let octree;
 let orbit = null; // aerial view state while it's on
 resize();
 let switching = false;
+let detail = touch ? 0 : 1;
 const houseBytes = new Map(); // decrypted GLBs, so switching back skips the download
 const collisionScenes = new Map();
 const octrees = new Map();
@@ -97,19 +106,43 @@ async function loadOctree(v, progress) {
   return octrees.get(v);
 }
 
-async function loadHouse(v, progress) {
-  const name = VARIANTS[v].house;
+function houseFile(v) {
+  return VARIANTS[v].house.replace('.glb', `${DETAILS[detail].suffix}.glb`);
+}
+
+// Downloads (or takes from the cache) the house bytes; null in dev when the GLBs aren't exported yet.
+async function houseData(v, progress) {
+  const name = houseFile(v);
   if (!houseBytes.has(name)) {
     try {
       houseBytes.set(name, await source.bytes(name, progress.track(name)));
     } catch (err) {
       if (!(plain && err.status === 404)) throw err;
-      return collisionPreview(); // dev only: house GLBs not exported yet
+      return null;
     }
   }
-  const gltf = await parseGLB(houseBytes.get(name));
+  return houseBytes.get(name);
+}
+
+async function parseHouse(data) {
+  if (!data) return collisionPreview();
+  const gltf = await parseGLB(data);
   prepareHouse(gltf.scene);
   return gltf.scene;
+}
+
+// Upload the textures now and drop the decoded copies, so each image isn't held twice in memory.
+function uploadTextures(root) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      for (const t of Object.values(m)) {
+        if (!t?.isTexture || !(t.image instanceof ImageBitmap)) continue;
+        renderer.initTexture(t);
+        t.image.close();
+      }
+    }
+  });
 }
 
 function prepareHouse(root) {
@@ -154,8 +187,8 @@ function disposeTree(root) {
 
 // Swap the visible house and collision; the player keeps position and view.
 // Only one variant stays on the GPU (4k bakes are large); the other is kept as bytes.
-async function setVariant(v) {
-  if (switching || v === variant) return;
+async function setVariant(v, { reload = false } = {}) {
+  if (switching || (v === variant && !reload)) return;
   switching = true;
   $('toggle').disabled = true;
   try {
@@ -165,12 +198,15 @@ async function setVariant(v) {
     );
     showLoading(`Loading ${what}…`, 0);
     const nextOctree = await loadOctree(v, progress); // small; the dev preview below reuses it
-    const nextHouse = await loadHouse(v, progress);
+    const data = await houseData(v, progress);
+    // Free the old house before unpacking the new one, so the two are never in memory together.
     if (house) {
       scene.remove(house);
       if (house.userData.disposable !== false) disposeTree(house);
+      house = null;
     }
-    house = nextHouse;
+    house = await parseHouse(data);
+    uploadTextures(house);
     scene.add(house);
     octree = nextOctree;
     variant = v;
@@ -317,6 +353,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(1 / 1.4);
   if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') setSpeed(Number(e.code.at(-1)) - 1);
   if (e.code === 'KeyO') toggleInOut();
+  if (e.code === 'KeyL') setDetail(detail + 1);
   if (e.code === 'Slash' || e.code === 'KeyH') setHelp($('help').hidden);
   if (e.code === 'Escape') {
     setMenu(false);
@@ -399,6 +436,27 @@ function setSpeed(i) {
 }
 $('speed').addEventListener('click', () => setSpeed(controls.speed + 1));
 setSpeed(1);
+
+// High is left out where the GPU can't take 4096 textures.
+function detailLevels() {
+  return DETAILS.filter((d) => d.side <= renderer.capabilities.maxTextureSize).length;
+}
+
+function showDetail() {
+  $('detail').textContent = `Detail: ${DETAILS[detail].label}`;
+}
+
+async function setDetail(i) {
+  if (switching) return;
+  detail = (i + detailLevels()) % detailLevels();
+  showDetail();
+  const keep = new Set(Object.keys(VARIANTS).map(houseFile)); // other levels' bytes aren't needed now
+  for (const name of [...houseBytes.keys()]) if (!keep.has(name)) houseBytes.delete(name);
+  if (variant) await setVariant(variant, { reload: true });
+}
+$('detail').addEventListener('click', () => setDetail(detail + 1));
+detail = Math.min(detail, detailLevels() - 1);
+showDetail();
 
 // ---------- aerial view ----------
 // Orbit around the whole site: drag to spin, zoom to come closer, click the ground to walk there.
