@@ -53,6 +53,8 @@ input {
   border-radius: 10px;
   background: #fff;
 }
+.show-pass { display: flex; align-items: center; gap: 0.4rem; margin: 0.6rem 0 0; font-size: 0.85rem; color: #555; }
+.show-pass input { width: auto; margin: 0; }
 #gate button { width: 100%; margin-top: 1rem; border-radius: 10px; background: var(--ink); }
 #gate-error { min-height: 1.2em; margin: 0.8rem 0 0; color: #b3261e; font-size: 0.9rem; }
 

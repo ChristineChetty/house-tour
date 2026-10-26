@@ -652,7 +652,14 @@ $('gate').addEventListener('submit', async (e) => {
   button.disabled = true;
   button.textContent = 'Unlocking…';
   try {
-    await start(input.value);
+    try {
+      await start(input.value);
+    } catch (err) {
+      // Phone keyboards sometimes add a space after a suggestion; try once without it.
+      const trimmed = input.value.trim();
+      if (err.name !== 'OperationError' || trimmed === input.value) throw err;
+      await start(trimmed);
+    }
     input.value = '';
   } catch (err) {
     console.error(err);
@@ -662,6 +669,10 @@ $('gate').addEventListener('submit', async (e) => {
     button.disabled = false;
     button.textContent = 'Enter';
   }
+});
+
+$('show-pass').addEventListener('change', (e) => {
+  $('password').type = e.target.checked ? 'text' : 'password';
 });
 
 if (plain) start(null);
