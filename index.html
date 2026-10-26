@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>House tour</title>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <form id="gate" autocomplete="off">
+      <div class="card">
+        <p class="eyebrow">Virtual walkthrough</p>
+        <h1>House tour</h1>
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required />
+        <button type="submit">Enter</button>
+        <p id="gate-error" role="alert"></p>
+      </div>
+    </form>
+
+    <div id="hud" hidden>
+      <div class="bar">
+        <button id="help-btn" aria-expanded="false" aria-controls="help" aria-label="Help">?</button>
+        <button id="inout" hidden>Go outside</button>
+        <button id="menu-btn" aria-expanded="false" aria-controls="menu">Rooms</button>
+        <button id="toggle" data-next="unfurnished">Show unfurnished</button>
+      </div>
+      <nav id="menu" hidden><div id="rooms"></div></nav>
+      <div id="tools">
+        <button id="map-btn" aria-expanded="false" aria-controls="map">Map</button>
+        <button id="aerial">Aerial</button>
+        <div class="zoom">
+          <button id="zoom-out" aria-label="Zoom out">−</button>
+          <span id="zoom-level">1×</span>
+          <button id="zoom-in" aria-label="Zoom in">+</button>
+        </div>
+        <button id="speed">Speed: Normal</button>
+      </div>
+      <p id="aerial-note" hidden>
+        <span>Aerial view · drag to spin · <span class="desktop-only">scroll</span><span class="touch-only">pinch</span> to zoom · click the ground to walk there</span>
+        <button id="aerial-walk">Back to walking</button>
+      </p>
+      <div id="help" hidden>
+        <h2>Getting around</h2>
+        <dl class="desktop-only">
+          <dt>Look</dt><dd>Drag with the mouse</dd>
+          <dt>Walk to a spot</dt><dd>Click the floor</dd>
+          <dt>Walk</dt><dd>W / S or ↑ / ↓ (Shift: faster)</dd>
+          <dt>Turn</dt><dd>Q / E or ← / →</dd>
+          <dt>Step sideways</dt><dd>A / D</dd>
+          <dt>Zoom</dt><dd>Scroll, or + / −</dd>
+          <dt>Speed</dt><dd>1 slow · 2 normal · 3 fast</dd>
+          <dt>Rooms</dt><dd>R</dd>
+          <dt>Floor plan</dt><dd>M</dd>
+          <dt>Aerial view</dt><dd>V</dd>
+          <dt>Inside / outside</dt><dd>O</dd>
+          <dt>Furnished / empty</dt><dd>F</dd>
+        </dl>
+        <dl class="touch-only">
+          <dt>Look</dt><dd>Drag anywhere</dd>
+          <dt>Walk to a spot</dt><dd>Tap the floor</dd>
+          <dt>Walk and turn</dt><dd>Stick, bottom left</dd>
+          <dt>Zoom</dt><dd>Pinch, or + / −</dd>
+        </dl>
+      </div>
+      <p id="hint"><span class="desktop-only">Drag to look · click the floor to walk there · ? for keys</span><span class="touch-only">Drag to look · tap the floor to walk there</span></p>
+      <p id="dev-note" hidden>Dev preview: house GLB not exported yet, showing the collision mesh.</p>
+      <div id="joy-move" class="joy touch-only"><div class="knob"></div></div>
+    </div>
+
+    <div id="map" hidden>
+      <div class="map-card">
+        <div class="map-head">
+          <h2>Floor plan</h2>
+          <span>Pick a room, or click anywhere to go there</span>
+          <button id="map-close" aria-label="Close">×</button>
+        </div>
+        <div id="plan-wrap">
+          <canvas id="plan"></canvas>
+          <div id="plan-labels"></div>
+          <div id="you"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="fade"></div>
+
+    <div id="loading" hidden>
+      <p id="loading-text">Loading…</p>
+      <div class="track"><div id="loading-bar"></div></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

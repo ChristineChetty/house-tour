@@ -1,0 +1,17 @@
+# Only encrypted tour files are ever committed: public/models/*.glb.enc and public/spawns.json.enc
+node_modules/
+dist/
+.DS_Store
+
+# plaintext models, textures and bakes
+*.glb
+*.gltf
+*.bin
+*.blend
+*.blend1
+bake/
+export/
+public/spawns.json
+public/models/*
+!public/models/*.glb.enc
+.claude/
